@@ -1,13 +1,32 @@
 /* globals jQuery, QUnit, Testem, require, requirejs */
 
 jQuery(document).ready(function() {
+
+  function urlParams() {
+    if (typeof QUnit !== 'undefined') {
+      return QUnit.urlParams;
+    }
+
+    var urlParams = {};
+    var match,
+        pl     = /\+/g,  // Regex for replacing addition symbol with a space
+        search = /([^&=]+)=?([^&]*)/g,
+        decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+        query  = window.location.search.substring(1);
+
+    while (match = search.exec(query)) {
+      urlParams[decode(match[1])] = decode(match[2]);
+    }
+    return urlParams;
+  }
+
   // Add the partition number for better debugging when reading the reporter
   if (window.Testem) {
     Testem.on('test-result', function prependPartition(test) {
-      var split = QUnit.urlParams._split;
-      if (split) {
-        test.name = 'Exam Partition #' + (QUnit.urlParams._partition || 1) + ' - ' + test.name;
-      }
+      var params = urlParams();
+      var split = params._split;
+      var partition = params._partition;
+      test.name = 'Exam Partition #' + (partition || 1) + ' - ' + test.name;
     });
   }
 
@@ -35,7 +54,7 @@ jQuery(document).ready(function() {
   TestLoader.prototype.unsee = function _unsee() {};
 
   TestLoader.prototype.loadModules = function _loadSplitModules() {
-    var params = QUnit.urlParams;
+    var params = urlParams();
     var split = parseInt(params._split, 10);
     var partition = parseInt(params._partition, 10);
 
@@ -98,4 +117,5 @@ jQuery(document).ready(function() {
 
     return groups;
   }
+
 });
